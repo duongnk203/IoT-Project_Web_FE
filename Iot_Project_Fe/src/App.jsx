@@ -191,10 +191,7 @@ function App() {
   const sensorConfigs = [
     { key: 'temperature', title: 'Temperature', color: '#ef4444', unit: '°C', iconName: 'Thermometer', yMin: 0, yMax: 40 },
     { key: 'humidity', title: 'Humidity', color: '#3b82f6', unit: '%', iconName: 'Droplets', yMin: 0, yMax: 100 },
-    { key: 'co2', title: 'CO2', color: '#f59e0b', unit: ' ppm', iconName: 'Wind', yMin: 300, yMax: 1000 },
-    { key: 'pM10', title: 'PM 10', color: '#f97316', unit: ' µg/m³', iconName: 'Activity', yMin: 0, yMax: 100 },
     { key: 'pM25', title: 'PM 2.5', color: '#8b5cf6', unit: ' µg/m³', iconName: 'Zap', yMin: 0, yMax: 100 },
-    { key: 'pM1', title: 'PM 1.0', color: '#10b981', unit: ' µg/m³', iconName: 'CloudRain', yMin: 0, yMax: 50 },
   ];
 
   const settingFields = [
