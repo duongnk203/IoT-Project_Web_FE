@@ -1,6 +1,21 @@
-import { Settings, Save, Play, StopCircle } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Settings,
+  Save,
+  Play,
+  StopCircle,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Power,
+  Cloud,
+  Wind
+} from 'lucide-react';
 
 export default function SettingsCard({ settings, fields, onChange, onSave, onStart, onStop }) {
+  const [isAutoEnabled, setIsAutoEnabled] = useState(false);
+
   return (
     <div className="chart-card settings-card">
       <div className="chart-info">
@@ -12,31 +27,98 @@ export default function SettingsCard({ settings, fields, onChange, onSave, onSta
         </div>
       </div>
       <div className="settings-wrapper">
-        {fields.map((field) => (
-          <div key={field.key} className="setting-field">
-            <label htmlFor={field.key}>{field.label}</label>
-            <input
-              id={field.key}
-              type={field.type}
-              step={field.step || '1'}
-              value={settings[field.key]}
-              onChange={(e) => onChange(field.key, e.target.value)}
-            />
+        <div className="control-panel">
+          <div className="control-header-row">
+            <span className="control-title">Điều khiển</span>
           </div>
-        ))}
-        <div className="settings-buttons">
-          <button onClick={onSave} className="settings-button save">
-            <Save size={16} />
-            Lưu thông số
-          </button>
-          <button onClick={onStart} className="settings-button start">
-            <Play size={16} />
-            Chạy liên tục
-          </button>
-          <button onClick={onStop} className="settings-button stop">
-            <StopCircle size={16} />
-            Dừng khẩn cấp
-          </button>
+
+          <div className="control-grid">
+            {fields.map((field) => (
+              <div key={field.key} className="setting-field">
+                <label htmlFor={field.key}>{field.label}</label>
+                <input
+                  id={field.key}
+                  type={field.type}
+                  step={field.step || '1'}
+                  value={settings[field.key]}
+                  onChange={(e) => onChange(field.key, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="settings-buttons">
+            <button onClick={onSave} className="settings-button save">
+              <Save size={16} />
+              Lưu thông số
+            </button>
+            <button onClick={onStart} className="settings-button start">
+              <Play size={16} />
+              Chạy liên tục
+            </button>
+            <button onClick={onStop} className="settings-button stop">
+              <StopCircle size={16} />
+              Dừng
+            </button>
+          </div>
+
+          <div className="direction-control-wrapper">
+            <div className="auto-switch-row">
+              <span className="auto-switch-label">{isAutoEnabled ? 'Tự động' : 'Thủ công'}</span>
+              <button
+                className={`auto-switch-button ${isAutoEnabled ? 'is-active' : ''}`}
+                type="button"
+                role="switch"
+                aria-checked={isAutoEnabled}
+                aria-label="Bật tắt chế độ tự động"
+                onClick={() => setIsAutoEnabled((prev) => !prev)}
+              >
+                <span className="auto-switch-track">
+                  <span className="auto-switch-thumb" />
+                </span>
+              </button>
+            </div>
+
+            <div className="direction-pad">
+              <button className="direction-btn up" type="button" aria-label="Lên" disabled={isAutoEnabled}>
+                <ArrowUp size={18} />
+              </button>
+              <button className="direction-btn left" type="button" aria-label="Trái" disabled={isAutoEnabled}>
+                <ArrowLeft size={18} />
+              </button>
+              <button className="direction-btn center power" type="button" aria-label="On Off" disabled={isAutoEnabled}>
+                <Power size={18} />
+              </button>
+              <button className="direction-btn right" type="button" aria-label="Phải" disabled={isAutoEnabled}>
+                <ArrowRight size={18} />
+              </button>
+              <button className="direction-btn down" type="button" aria-label="Xuống" disabled={isAutoEnabled}>
+                <ArrowDown size={18} />
+              </button>
+            </div>
+
+            <div className="action-buttons-bottom">
+              <button
+                className="action-button mist-button"
+                type="button"
+                disabled={isAutoEnabled}
+                onClick={() => alert('Đã bật chế độ phun sương')}
+              >
+                <Cloud size={16} />
+                Phun sương
+              </button>
+              <button
+                className="action-button filter-button"
+                type="button"
+                disabled={isAutoEnabled}
+                onClick={() => alert('Đã bật chế độ lọc không khí')}
+              >
+                <Wind size={16} />
+                Lọc không khí
+              </button>
+            </div>
+          </div>
+
+          
         </div>
       </div>
     </div>

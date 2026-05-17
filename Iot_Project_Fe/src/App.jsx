@@ -189,8 +189,8 @@ function App() {
   };
 
   const sensorConfigs = [
-    { key: 'temperature', title: 'Temperature', color: '#ef4444', unit: '°C', iconName: 'Thermometer', yMin: 0, yMax: 40 },
-    { key: 'humidity', title: 'Humidity', color: '#3b82f6', unit: '%', iconName: 'Droplets', yMin: 0, yMax: 100 },
+    { key: 'temperature', title: 'Nhiệt độ', color: '#ef4444', unit: '°C', iconName: 'Thermometer', yMin: 0, yMax: 40 },
+    { key: 'humidity', title: 'Độ ẩm', color: '#3b82f6', unit: '%', iconName: 'Droplets', yMin: 0, yMax: 100 },
     { key: 'pM25', title: 'PM 2.5', color: '#8b5cf6', unit: ' µg/m³', iconName: 'Zap', yMin: 0, yMax: 100 },
   ];
 

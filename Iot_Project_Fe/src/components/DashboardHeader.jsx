@@ -9,7 +9,7 @@ export default function DashboardHeader({ onRefresh, loading, error }) {
         </div>
         <button onClick={onRefresh} className="refresh-button" disabled={loading}>
           <RefreshCw size={20} className={loading ? 'spin' : ''} />
-          <span>Refresh</span>
+          <span>Làm mới</span>
         </button>
       </div>
       {error && <div className="error-banner">{error}</div>}
