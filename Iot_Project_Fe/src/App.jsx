@@ -17,6 +17,7 @@ function App() {
     ki: '',
     kd: ''
   });
+  const [alarmState, setAlarmState] = useState({ envAlarm: false, dryAlarm: false });
 
   const fetchData = async () => {
     try {
@@ -29,6 +30,21 @@ function App() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAlarmStatus = async () => {
+    try {
+      const response = await fetch('https://iot-project-web-sensor.onrender.com/api/home/device-config');
+      if (!response.ok) return;
+
+      const config = await response.json();
+      setAlarmState({
+        envAlarm: Boolean(config?.envAlarm),
+        dryAlarm: Boolean(config?.dryAlarm),
+      });
+    } catch (err) {
+      console.error('Error fetching alarm status:', err);
     }
   };
 
@@ -61,11 +77,13 @@ function App() {
     const initialTimer = setTimeout(() => {
       fetchData();
       fetchConfig();
+      fetchAlarmStatus();
     }, 0);
 
     const interval = setInterval(() => {
       fetchData();
       fetchConfig();
+      fetchAlarmStatus();
     }, 30000);
 
     return () => {
@@ -191,16 +209,32 @@ function App() {
   const handleManualCommand = async (command) => {
     try {
       setLoading(true);
-      const parsedSpeed = settings.speed ? parseInt(settings.speed, 10) : null;
-      const movementCommands = ['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT', 'RUNNING'];
-      const isTimedMovementCommand = movementCommands.includes(command);
 
-      const result = await sendDeviceCommand({
-        mode: 'MANUAL',
+      const parsedSpeed = settings.speed ? parseInt(settings.speed, 10) : null;
+      const movementCommands = ['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT', 'RUNNING', 'STOP'];
+      const relayCommands = ['MIST_ON', 'MIST_OFF', 'FILTER_ON', 'FILTER_OFF'];
+
+      const isMovementCommand = movementCommands.includes(command);
+      const isRelayCommand = relayCommands.includes(command);
+
+      const payload = {
+        mode: isMovementCommand ? 'MANUAL' : 'AUTO',
         command,
-        speed: Number.isNaN(parsedSpeed) ? null : parsedSpeed,
-        durationMs: command === 'STOP' ? 0 : (isTimedMovementCommand ? 3000 : null),
-      });
+        speed: null,
+        durationMs: null,
+      };
+
+      if (isMovementCommand) {
+        payload.speed = Number.isNaN(parsedSpeed) ? null : parsedSpeed;
+        payload.durationMs = command === 'STOP' ? 0 : 3000;
+      }
+
+      if (isRelayCommand) {
+        payload.speed = null;
+        payload.durationMs = null;
+      }
+
+      const result = await sendDeviceCommand(payload);
 
       console.log(`Manual command ${command} sent:`, result);
       setError(null);
@@ -231,6 +265,14 @@ function App() {
   return (
     <div className="dashboard-container">
       <DashboardHeader onRefresh={fetchData} loading={loading} error={error} />
+
+      {(alarmState.envAlarm || alarmState.dryAlarm) && (
+        <div className="alarm-banner">
+          ⚠️ CẢNH BÁO: {alarmState.envAlarm ? 'Chất lượng không khí bất thường (khói/PM2.5 cao)' : ''}
+          {alarmState.envAlarm && alarmState.dryAlarm ? ' | ' : ''}
+          {alarmState.dryAlarm ? 'Độ ẩm thấp, cần phun sương' : ''}
+        </div>
+      )}
 
       <div className="charts-grid">
         {sensorConfigs.map((config) => (

@@ -5,7 +5,7 @@ export default function DashboardHeader({ onRefresh, loading, error }) {
     <header className="dashboard-header">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Xe Siêu Âm</h1>
+          <h1>Robot giám sát môi trường</h1>
         </div>
         <button onClick={onRefresh} className="refresh-button" disabled={loading}>
           <RefreshCw size={20} className={loading ? 'spin' : ''} />
