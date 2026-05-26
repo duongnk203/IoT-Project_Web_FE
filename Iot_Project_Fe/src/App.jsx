@@ -23,19 +23,6 @@ function App() {
       setLoading(true);
       const historyData = await fetchHistoryDataWithFallback();
       setData(historyData);
-
-      if (historyData.length > 0) {
-        const latest = historyData[historyData.length - 1];
-        setSettings({
-          thresholdPm25: latest.thresholdPm25 || '',
-          thresholdHum: latest.thresholdHum || '',
-          speed: latest.speed || '',
-          kp: latest.kp || '',
-          ki: latest.ki || '',
-          kd: latest.kd || '',
-        });
-      }
-
       setError(null);
     } catch (err) {
       console.error('Error:', err);
@@ -45,14 +32,82 @@ function App() {
     }
   };
 
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch('https://iot-project-web-sensor.onrender.com/api/home/device-config');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const config = await response.json();
+      if (config) {
+        setSettings({
+          thresholdPm25: config.thresholdPm25 ?? '',
+          thresholdHum: config.thresholdHum ?? '',
+          speed: config.speed ?? '',
+          kp: config.kp ?? '',
+          ki: config.ki ?? '',
+          kd: config.kd ?? '',
+        });
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching config:', err);
+      setError('Lỗi tải cấu hình: ' + err.message);
+    }
+  };
+
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    const initialTimer = setTimeout(() => {
+      fetchData();
+      fetchConfig();
+    }, 0);
+
+    const interval = setInterval(() => {
+      fetchData();
+      fetchConfig();
+    }, 30000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleSettingChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const sendDeviceCommand = async ({ mode = 'AUTO', command, speed = null, durationMs = null }) => {
+    const payload = {
+      deviceId: 'car_001',
+      mode,
+      command,
+      speed,
+      durationMs,
+    };
+
+    const response = await fetch(
+      'https://iot-project-web-sensor.onrender.com/api/home/device-command',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    }
+    return response.text();
   };
 
   const saveSettings = async () => {
@@ -93,45 +148,15 @@ function App() {
     }
   };
 
-   const startContinuous = async () => {
+  const startContinuous = async () => {
     try {
       setLoading(true);
-      const payload = {
-        deviceId: "car_001",
-        command: "RUNNING"
-      };
+      const result = await sendDeviceCommand({
+        mode: 'AUTO',
+        command: 'RUNNING',
+      });
 
-      console.log('Sending payload:', payload);
-
-      const response = await fetch(
-        'https://iot-project-web-sensor.onrender.com/api/home/device-command',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers.get('content-type'));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      let result;
-      if (contentType && contentType.includes('application/json')) {
-        result = await response.json();
-      } else {
-        result = await response.text();
-      }
-
-      console.log('Command sent:', result);
+      console.log('Start continuous sent:', result);
       setError(null);
       alert('Bắt đầu chạy liên tục!');
     } catch (err) {
@@ -146,35 +171,10 @@ function App() {
   const emergencyStop = async () => {
     try {
       setLoading(true);
-      const payload = {
-        deviceId: "car_001",
-        command: "STOP"
-      };
-
-      const response = await fetch(
-        'https://iot-project-web-sensor.onrender.com/api/home/device-command',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      let result;
-      if (contentType && contentType.includes('application/json')) {
-        result = await response.json();
-      } else {
-        result = await response.text();
-      }
+      const result = await sendDeviceCommand({
+        mode: 'AUTO',
+        command: 'STOP',
+      });
 
       console.log('Emergency stop sent:', result);
       setError(null);
@@ -183,6 +183,28 @@ function App() {
       console.error('Error emergency stop:', err);
       setError('Lỗi dừng khẩn cấp: ' + err.message);
       alert('Lỗi dừng khẩn cấp: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleManualCommand = async (command) => {
+    try {
+      setLoading(true);
+      const parsedSpeed = settings.speed ? parseInt(settings.speed, 10) : null;
+      const result = await sendDeviceCommand({
+        mode: 'MANUAL',
+        command,
+        speed: Number.isNaN(parsedSpeed) ? null : parsedSpeed,
+        durationMs: command === 'STOP' ? 0 : 1200,
+      });
+
+      console.log(`Manual command ${command} sent:`, result);
+      setError(null);
+    } catch (err) {
+      console.error('Error sending manual command:', err);
+      setError('Lỗi gửi lệnh thủ công: ' + err.message);
+      alert('Lỗi gửi lệnh thủ công: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -219,6 +241,7 @@ function App() {
           onSave={saveSettings}
           onStart={startContinuous}
           onStop={emergencyStop}
+          onManualCommand={handleManualCommand}
         />
       </div>
     </div>

@@ -13,8 +13,11 @@ import {
   Wind
 } from 'lucide-react';
 
-export default function SettingsCard({ settings, fields, onChange, onSave, onStart, onStop }) {
+export default function SettingsCard({ settings, fields, onChange, onSave, onStart, onStop, onManualCommand }) {
   const [isAutoEnabled, setIsAutoEnabled] = useState(false);
+  const [isPowerOn, setIsPowerOn] = useState(false);
+  const [isMistOn, setIsMistOn] = useState(false);
+  const [isFilterOn, setIsFilterOn] = useState(false);
 
   return (
     <div className="chart-card settings-card">
@@ -70,7 +73,15 @@ export default function SettingsCard({ settings, fields, onChange, onSave, onSta
                 role="switch"
                 aria-checked={isAutoEnabled}
                 aria-label="Bật tắt chế độ tự động"
-                onClick={() => setIsAutoEnabled((prev) => !prev)}
+                onClick={() => {
+                  const nextAutoEnabled = !isAutoEnabled;
+                  setIsAutoEnabled(nextAutoEnabled);
+                  if (nextAutoEnabled) {
+                    setIsPowerOn(false);
+                    setIsMistOn(false);
+                    setIsFilterOn(false);
+                  }
+                }}
               >
                 <span className="auto-switch-track">
                   <span className="auto-switch-thumb" />
@@ -79,19 +90,53 @@ export default function SettingsCard({ settings, fields, onChange, onSave, onSta
             </div>
 
             <div className="direction-pad">
-              <button className="direction-btn up" type="button" aria-label="Lên" disabled={isAutoEnabled}>
+              <button
+                className="direction-btn up"
+                type="button"
+                aria-label="Lên"
+                disabled={isAutoEnabled}
+                onClick={() => onManualCommand?.('FORWARD')}
+              >
                 <ArrowUp size={18} />
               </button>
-              <button className="direction-btn left" type="button" aria-label="Trái" disabled={isAutoEnabled}>
+              <button
+                className="direction-btn left"
+                type="button"
+                aria-label="Trái"
+                disabled={isAutoEnabled}
+                onClick={() => onManualCommand?.('LEFT')}
+              >
                 <ArrowLeft size={18} />
               </button>
-              <button className="direction-btn center power" type="button" aria-label="On Off" disabled={isAutoEnabled}>
+              <button
+                className="direction-btn center power"
+                type="button"
+                aria-label="On Off"
+                disabled={isAutoEnabled}
+                onClick={() => {
+                  const nextPowerOn = !isPowerOn;
+                  setIsPowerOn(nextPowerOn);
+                  onManualCommand?.(nextPowerOn ? 'RUNNING' : 'STOP');
+                }}
+              >
                 <Power size={18} />
               </button>
-              <button className="direction-btn right" type="button" aria-label="Phải" disabled={isAutoEnabled}>
+              <button
+                className="direction-btn right"
+                type="button"
+                aria-label="Phải"
+                disabled={isAutoEnabled}
+                onClick={() => onManualCommand?.('RIGHT')}
+              >
                 <ArrowRight size={18} />
               </button>
-              <button className="direction-btn down" type="button" aria-label="Xuống" disabled={isAutoEnabled}>
+              <button
+                className="direction-btn down"
+                type="button"
+                aria-label="Xuống"
+                disabled={isAutoEnabled}
+                onClick={() => onManualCommand?.('BACKWARD')}
+              >
                 <ArrowDown size={18} />
               </button>
             </div>
@@ -101,19 +146,27 @@ export default function SettingsCard({ settings, fields, onChange, onSave, onSta
                 className="action-button mist-button"
                 type="button"
                 disabled={isAutoEnabled}
-                onClick={() => alert('Đã bật chế độ phun sương')}
+                onClick={() => {
+                  const nextMistOn = !isMistOn;
+                  setIsMistOn(nextMistOn);
+                  onManualCommand?.(nextMistOn ? 'MIST_ON' : 'MIST_OFF');
+                }}
               >
                 <Cloud size={16} />
-                Phun sương
+                {isMistOn ? 'Tắt phun sương' : 'Phun sương'}
               </button>
               <button
                 className="action-button filter-button"
                 type="button"
                 disabled={isAutoEnabled}
-                onClick={() => alert('Đã bật chế độ lọc không khí')}
+                onClick={() => {
+                  const nextFilterOn = !isFilterOn;
+                  setIsFilterOn(nextFilterOn);
+                  onManualCommand?.(nextFilterOn ? 'FILTER_ON' : 'FILTER_OFF');
+                }}
               >
                 <Wind size={16} />
-                Lọc không khí
+                {isFilterOn ? 'Tắt lọc không khí' : 'Lọc không khí'}
               </button>
             </div>
           </div>
