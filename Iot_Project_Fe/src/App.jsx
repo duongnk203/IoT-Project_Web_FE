@@ -192,11 +192,14 @@ function App() {
     try {
       setLoading(true);
       const parsedSpeed = settings.speed ? parseInt(settings.speed, 10) : null;
+      const movementCommands = ['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT', 'RUNNING'];
+      const isTimedMovementCommand = movementCommands.includes(command);
+
       const result = await sendDeviceCommand({
         mode: 'MANUAL',
         command,
         speed: Number.isNaN(parsedSpeed) ? null : parsedSpeed,
-        durationMs: command === 'STOP' ? 0 : 1200,
+        durationMs: command === 'STOP' ? 0 : (isTimedMovementCommand ? 3000 : null),
       });
 
       console.log(`Manual command ${command} sent:`, result);
